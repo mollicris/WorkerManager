@@ -7,6 +7,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.lifecycle.Observer
 import androidx.work.*
+import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
 
@@ -21,7 +22,8 @@ class MainActivity : AppCompatActivity() {
         val button = findViewById<Button>(R.id.button)
         textview1 = findViewById(R.id.textview)
         button.setOnClickListener {
-            setOneTimeWorkRequest()
+            //setOneTimeWorkRequest()
+            setPeriodicWorkRequest()
         }
     }
     private fun setOneTimeWorkRequest(){
@@ -42,7 +44,28 @@ class MainActivity : AppCompatActivity() {
             .setConstraints(constraints)
             .setInputData(data)
             .build()
-        workManager.enqueue(uploadRequest)
+
+        val filteringRequest = OneTimeWorkRequest.Builder(FilteringWorker::class.java)
+            .build()
+
+        val compressingRequest = OneTimeWorkRequest.Builder(CompressingWorker::class.java)
+            .build()
+
+        val downloadingWorker = OneTimeWorkRequest.Builder(DownloadingWorker::class.java)
+            .build()
+
+        val parallWorks = mutableListOf<OneTimeWorkRequest>()
+        parallWorks.add(downloadingWorker)
+        parallWorks.add(filteringRequest)
+        //workManager.enqueue(uploadRequest)
+        workManager
+            .beginWith(parallWorks)
+            .then(compressingRequest)
+            .then(uploadRequest)
+            .enqueue()
+
+
+
         //Esto sirve para escuchar
         workManager.getWorkInfoByIdLiveData(uploadRequest.id)
             .observe(this, Observer {
@@ -54,5 +77,12 @@ class MainActivity : AppCompatActivity() {
                 }
             })
 
+    }
+
+    private fun setPeriodicWorkRequest(){
+        val periodicWorkRequest = PeriodicWorkRequest.
+        Builder(DownloadingWorker::class.java,16,TimeUnit.MINUTES)
+            .build()
+        WorkManager.getInstance(applicationContext).enqueue(periodicWorkRequest)
     }
 }

@@ -17,7 +17,7 @@ class UploadWorker(context : Context, params:WorkerParameters)  : Worker(context
     override fun doWork(): Result {
         try {
             val count = inputData.getInt(MainActivity.KEY_COUNT_VALUE,0)
-            for (i:Int in 0..600){
+            for (i:Int in 0..count){
                 Log.i("MyTAG","Upload $i")
             }
             val time = SimpleDateFormat("dd:MM/yyyy hh:mm:ss")
